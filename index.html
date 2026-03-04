@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endo-Referee AI</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; max-width: 420px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid #3498db; }
+        h2 { color: #2c3e50; margin: 0 0 5px 0; }
+        .subtitle { color: #7f8c8d; font-size: 0.85em; margin-bottom: 20px; }
+        .info-box { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #bdc3c7; }
+        .info-box p { margin: 5px 0; font-size: 0.82em; color: #57606f; line-height: 1.4; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9em; font-weight: bold; color: #34495e; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; text-align: center; position: relative; }
+        .timestamp { font-size: 0.7em; color: #95a5a6; margin-top: 10px; display: block; }
+        .red { background: #ffebee; color: #c62828; border: 1px solid #ef5350; }
+        .yellow { background: #fff9c4; color: #f57f17; border: 1px solid #fbc02d; }
+        .green { background: #e8f5e9; color: #2e7d32; border: 1px solid #66bb6a; }
+        strong { color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Endo-Referee AI</h2>
+    <div class="subtitle">Clinical Decision Support System</div>
+
+    <div class="info-box">
+        <p><strong>Vd (Velocity of Decline):</strong> Annual AMH loss. Tracks "Ovarian Burn."</p>
+        <p><strong>Vf (Functional Volume):</strong> % of healthy tissue. Defines surgical margin.</p>
+    </div>
+    
+    <div class="input-group"><label>Patient ID / Name</label><input type="text" id="patient_id" placeholder="e.g. JB-1994"></div>
+    <div class="input-group"><label>Current AMH (ng/mL)</label><input type="number" id="amh_now" step="0.1" value="1.8"></div>
+    <div class="input-group"><label>AMH 12 Months Ago</label><input type="number" id="amh_prev" step="0.1" value="2.4"></div>
+    <div class="input-group"><label>Total Ovarian Vol (cc)</label><input type="number" id="vol_total" value="10"></div>
+    <div class="input-group"><label>Cyst Volume (cc)</label><input type="number" id="vol_cyst" value="7"></div>
+
+    <button onclick="run()">Generate Referee Call</button>
+
+    <div id="result">
+        <div id="decision_text"></div>
+        <span id="time_label" class="timestamp"></span>
+    </div>
+</div>
+
+<script>
+function run() {
+    const pId = document.getElementById('patient_id').value || "Anonymous";
+    const amhNow = parseFloat(document.getElementById('amh_now').value);
+    const amhPrev = parseFloat(document.getElementById('amh_prev').value);
+    const volTotal = parseFloat(document.getElementById('vol_total').value);
+    const volCyst = parseFloat(document.getElementById('vol_cyst').value);
+
+    const Vd = amhPrev - amhNow;
+    const Vf = ((volTotal - volCyst) / volTotal) * 100;
+    const res = document.getElementById('result');
+    const timeLabel = document.getElementById('time_label');
+    
+    res.style.display = 'block';
+    timeLabel.innerText = "Calculated on: " + new Date().toLocaleString() + " | Patient: " + pId;
+
+    if (Vd > 0.5 || Vf < 30 || amhNow < 0.8) {
+        res.className = 'red';
+        res.querySelector('#decision_text').innerHTML = "<b>REFEREE CALL: RED</b><br>High Urgency: Freeze Now<br><small>Vd: " + Vd.toFixed(2) + " | Vf: " + Vf.toFixed(0) + "%</small>";
+    } else if (Vd > 0.2 || Vf < 50) {
+        res.className = 'yellow';
+        res.querySelector('#decision_text').innerHTML = "<b>REFEREE CALL: YELLOW</b><br>Caution: Freeze Before Surgery<br><small>Vd: " + Vd.toFixed(2) + " | Vf: " + Vf.toFixed(0) + "%</small>";
+    } else {
+        res.className = 'green';
+        res.querySelector('#decision_text').innerHTML = "<b>REFEREE CALL: GREEN</b><br>Standard Risk: Safe for Surgery<br><small>Vd: " + Vd.toFixed(2) + " | Vf: " + Vf.toFixed(0) + "%</small>";
+    }
+}
+</script>
+</body>
+</html>
