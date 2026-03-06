@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Endo-Referee AI v6.1</title>
+    <title>Endo-Referee AI v6.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -29,7 +29,7 @@
 
 <div class="card" id="capture-area">
     <h2>Endo-Referee AI</h2>
-    <div class="subtitle">Clinical Decision Support v6.1</div>
+    <div class="subtitle">Clinical Decision Support v6.2</div>
     
     <div class="input-group"><label>Patient ID</label><input type="text" id="p_id" placeholder="Anonymous"></div>
     <div class="input-group"><label>Current AFC (Total)</label><input type="number" id="afc" value="8"></div>
@@ -92,13 +92,17 @@ function run() {
     document.getElementById('math_df').innerText = Df.toFixed(2);
     document.getElementById('math_rm').innerText = Rm.toFixed(1);
     document.getElementById('math_yield').innerText = (afc * Vf).toFixed(1);
+    
+    // Reset the math toggle visibility every time we run a new calculation
+    document.getElementById('math_details').style.display = "none";
 }
 
-// Fixed toggle function
 function toggleMath() {
     const details = document.getElementById('math_details');
-    // Force a check against the actual computed style
-    if (window.getComputedStyle(details).display === "none") {
+    // We use getComputedStyle to bypass any caching issues
+    const displayStatus = window.getComputedStyle(details).display;
+    
+    if (displayStatus === "none") {
         details.style.display = "block";
     } else {
         details.style.display = "none";
@@ -111,7 +115,7 @@ function takeScreenshot() {
     const saveBtn = document.getElementById('save-btn');
     
     toggle.style.visibility = 'hidden';
-    saveBtn.innerText = "Generating...";
+    saveBtn.innerText = "Generating Image...";
     
     html2canvas(area, { scale: 2 }).then(canvas => {
         const link = document.createElement('a');
