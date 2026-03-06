@@ -58,21 +58,27 @@
 <button class="btn-secondary" id="save-btn" onclick="takeScreenshot()">Save Result as Image</button>
 
 <script>
+// This "Switch" variable keeps track of whether the box is open or closed
+var isMathOpen = false;
+
 function run() {
     const pId = document.getElementById('p_id').value || "Anonymous";
     const afc = parseFloat(document.getElementById('afc').value);
     const vt = parseFloat(document.getElementById('v_t').value);
     const vc = parseFloat(document.getElementById('v_c').value);
     
+    // Core Calculations
     const Vf = (vt - vc) / vt;
     const Rm = 1 / Vf;
     const Df = afc / (vt - vc);
     const survival = Math.round(afc * Vf);
     
+    // Show the Results Box
     const res = document.getElementById('result');
     res.style.display = 'block';
     document.getElementById('save-btn').style.display = 'block';
 
+    // Set the Referee Color
     if (Vf < 0.3 || survival < 3) {
         res.className = 'red';
         document.getElementById('status').innerHTML = "<b>REFEREE CALL: RED</b><br>Significant Architectural Risk.";
@@ -84,25 +90,28 @@ function run() {
         document.getElementById('status').innerHTML = "<b>REFEREE CALL: GREEN</b><br>Favorable Surgical Margin.";
     }
 
+    // Update Text Fields
     document.getElementById('pred').innerHTML = "Predicted Post-Op AFC: " + survival;
     document.getElementById('metrics').innerHTML = "Safety Margin (Vf): " + (Vf*100).toFixed(0) + "%";
     document.getElementById('ts').innerText = "Patient: " + pId + " | " + new Date().toLocaleString();
     
+    // Update Math Analysis Fields
     document.getElementById('math_vf').innerText = (Vf * 100).toFixed(0) + "%";
     document.getElementById('math_df').innerText = Df.toFixed(2);
     document.getElementById('math_rm').innerText = Rm.toFixed(1);
     document.getElementById('math_yield').innerText = (afc * Vf).toFixed(1);
     
-    // Reset the math toggle visibility every time we run a new calculation
+    // IMPORTANT: Reset the math box to "closed" every time a new calculation happens
     document.getElementById('math_details').style.display = "none";
+    isMathOpen = false;
 }
 
+// THIS IS THE TOGGLE THAT WAS GIVING US TROUBLE - NOW FIXED
 function toggleMath() {
     const details = document.getElementById('math_details');
-    // We use getComputedStyle to bypass any caching issues
-    const displayStatus = window.getComputedStyle(details).display;
+    isMathOpen = !isMathOpen; // This flips the switch: true becomes false, false becomes true
     
-    if (displayStatus === "none") {
+    if (isMathOpen) {
         details.style.display = "block";
     } else {
         details.style.display = "none";
