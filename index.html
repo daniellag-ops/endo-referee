@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Endo-Referee AI v6.7</title>
+    <title>Endo-Referee AI v6.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -14,20 +14,13 @@
         label { display: block; margin-bottom: 4px; font-size: 0.85em; font-weight: bold; color: #2c3e50; }
         input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
         .btn-primary { width: 100%; padding: 14px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        
-        /* The Math Analysis Button Style */
         .btn-math { width: 100%; padding: 10px; background: #f8f9fa; color: #3498db; border: 2px solid #3498db; border-radius: 6px; font-size: 0.9em; font-weight: bold; cursor: pointer; margin-top: 15px; display: block; }
-        
         #result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; text-align: center; border: 1px solid #ddd; }
         .prediction { font-size: 1.3em; font-weight: bold; margin: 10px 0; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.2); }
-        
-        /* Explicitly hidden initially */
         #math-details { display: none; background: #ffffff; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 0.85em; text-align: left; line-height: 1.5; color: #444; border: 1px solid #ddd; }
-        
         .red { background: #ffebee; color: #c62828; border-color: #ef5350; }
         .yellow { background: #fff9c4; color: #f57f17; border-color: #fbc02d; }
         .green { background: #e8f5e9; color: #2e7d32; border-color: #66bb6a; }
-        .timestamp { font-size: 0.7em; margin-top: 10px; opacity: 0.7; }
         .btn-save { width: 100%; padding: 12px; background: #95a5a6; color: white; border: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; cursor: pointer; margin-top: 15px; display: none; }
     </style>
 </head>
@@ -35,28 +28,31 @@
 
 <div class="card" id="capture-area">
     <h2>Endo-Referee AI</h2>
-    <div class="subtitle">Clinical Decision Support v6.7</div>
+    <div class="subtitle">Geometric Risk Modeling v6.8</div>
     
     <div class="input-group"><label>Patient ID</label><input type="text" id="p_id" placeholder="Anonymous"></div>
-    <div class="input-group"><label>Current AFC (Total)</label><input type="number" id="afc" value="8"></div>
+    <div class="input-group"><label>Current AFC (Cortical Count)</label><input type="number" id="afc" value="8"></div>
     <div class="input-group"><label>Total Ovarian Vol (cc)</label><input type="number" id="v_t" value="12"></div>
-    <div class="input-group"><label>Cyst Volume (cc)</label><input type="number" id="v_c" value="9"></div>
+    <div class="input-group"><label>Lesion/Cyst Volume (cc)</label><input type="number" id="v_c" value="9"></div>
 
-    <button class="btn-primary" onclick="calculate()">Calculate Surgical Risk</button>
+    <button class="btn-primary" onclick="calculate()">Calculate Cortical Risk</button>
 
     <div id="result">
         <div id="status"></div>
         <div class="prediction" id="pred"></div>
         <div id="metrics" style="font-size: 0.9em; margin-bottom: 10px;"></div>
-        <div class="timestamp" id="ts"></div>
         
-        <button class="btn-math" id="math-btn" onclick="toggleMath()">SHOW MATH ANALYSIS</button>
+        <button class="btn-math" id="math-btn" onclick="toggleMath()">SHOW GEOMETRIC PROOF</button>
         
         <div id="math-details">
-            <strong>1. Safety Margin (Vf):</strong> <span id="math_vf"></span><br>
-            <strong>2. Follicular Density (Df):</strong> <span id="math_df"></span>/cc<br>
-            <strong>3. Risk Multiplier (Rm):</strong> <span id="math_rm"></span>x<br>
-            <strong>4. Predicted Yield (AFCp):</strong> <span id="math_yield"></span>
+            <b>1. Cortical Safety Margin (Vf):</b> <span id="math_vf"></span><br>
+            <i>(Vf = [Total Vol - Lesion Vol] / Total Vol)</i><br><br>
+            
+            <b>2. Follicular Density (Df):</b> <span id="math_df"></span>/cc<br>
+            <i>(Df = AFC / Cortical Volume)</i><br><br>
+            
+            <b>3. Risk Multiplier (Rm):</b> <span id="math_rm"></span>x<br>
+            <i>(Rm = 1 / Vf. Represents the escalation of surgical trauma risk per cortical millimeter.)</i>
         </div>
     </div>
 </div>
@@ -64,72 +60,46 @@
 <button class="btn-save" id="save-btn" onclick="takeScreenshot()">Save Result as Image</button>
 
 <script>
-// Main Calculation Function
 function calculate() {
     var afc = parseFloat(document.getElementById('afc').value);
     var vt = parseFloat(document.getElementById('v_t').value);
     var vc = parseFloat(document.getElementById('v_c').value);
-    var pId = document.getElementById('p_id').value || "Anonymous";
     
     var Vf = (vt - vc) / vt;
     var Rm = 1 / Vf;
     var Df = afc / (vt - vc);
     var survival = Math.round(afc * Vf);
     
-    // Show UI elements
     document.getElementById('result').style.display = 'block';
     document.getElementById('save-btn').style.display = 'block';
 
-    // Set Colors
     var res = document.getElementById('result');
-    var statusTxt = "";
-    if (Vf < 0.3) {
-        res.className = 'red';
-        statusTxt = "RED (High Risk)";
-    } else if (Vf < 0.6) {
-        res.className = 'yellow';
-        statusTxt = "YELLOW (Moderate Risk)";
-    } else {
-        res.className = 'green';
-        statusTxt = "GREEN (Low Risk)";
-    }
+    if (Vf < 0.3) { res.className = 'red'; } 
+    else if (Vf < 0.6) { res.className = 'yellow'; } 
+    else { res.className = 'green'; }
 
-    // Fill Data
-    document.getElementById('status').innerHTML = "<b>REFEREE CALL: " + statusTxt + "</b><br>Surgical Safety Margin Risk Analysis.";
+    document.getElementById('status').innerHTML = "<b>REFEREE CALL: " + (Vf < 0.3 ? "RED" : Vf < 0.6 ? "YELLOW" : "GREEN") + "</b><br>High Cortical Compression Detected.";
     document.getElementById('pred').innerHTML = "Predicted Post-Op AFC: " + survival;
-    document.getElementById('metrics').innerHTML = "Safety Margin (Vf): " + (Vf*100).toFixed(0) + "%";
-    document.getElementById('ts').innerText = "Patient: " + pId + " | " + new Date().toLocaleString();
+    document.getElementById('metrics').innerHTML = "Cortical Margin (Vf): " + (Vf*100).toFixed(0) + "%";
     
     document.getElementById('math_vf').innerText = (Vf * 100).toFixed(0) + "%";
     document.getElementById('math_df').innerText = Df.toFixed(2);
     document.getElementById('math_rm').innerText = Rm.toFixed(1);
     document.getElementById('math_yield').innerText = (afc * Vf).toFixed(1);
 
-    // Reset math view
     document.getElementById('math-details').style.display = "none";
-    document.getElementById('math-btn').innerText = "SHOW MATH ANALYSIS";
 }
 
-// TOGGLE FUNCTION - FIXED
 function toggleMath() {
     var box = document.getElementById('math-details');
-    var btn = document.getElementById('math-btn');
-    
-    if (box.style.display === "block") {
-        box.style.display = "none";
-        btn.innerText = "SHOW MATH ANALYSIS";
-    } else {
-        box.style.display = "block";
-        btn.innerText = "HIDE MATH ANALYSIS";
-    }
+    box.style.display = (box.style.display === "block") ? "none" : "block";
 }
 
-// Screenshot Function
 function takeScreenshot() {
     var area = document.getElementById('capture-area');
     html2canvas(area).then(function(canvas) {
         var link = document.createElement('a');
-        link.download = 'Endo-Referee.png';
+        link.download = 'Endo-Referee-Proof.png';
         link.href = canvas.toDataURL();
         link.click();
     });
