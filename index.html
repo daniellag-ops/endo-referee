@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Endo-Referee AI v6.5</title>
+    <title>Endo-Referee AI v6.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -13,12 +13,21 @@
         .input-group { margin-bottom: 12px; }
         label { display: block; margin-bottom: 4px; font-size: 0.85em; font-weight: bold; color: #2c3e50; }
         input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        
+        /* Main Action Button */
         .btn-primary { width: 100%; padding: 14px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-math { width: 100%; padding: 8px; background: #ecf0f1; color: #34495e; border: 1px solid #bdc3c7; border-radius: 6px; font-size: 0.85em; cursor: pointer; margin-top: 15px; }
+        
+        /* The NEW Math Button Style */
+        .btn-math { width: 100%; padding: 10px; background: rgba(0,0,0,0.05); color: #3498db; border: 1px solid #3498db; border-radius: 6px; font-size: 0.9em; font-weight: bold; cursor: pointer; margin-top: 15px; text-decoration: none; display: block; }
+        
         .btn-secondary { width: 100%; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; cursor: pointer; margin-top: 10px; display: none; }
+        
         #result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; text-align: center; }
-        .prediction { font-size: 1.3em; font-weight: bold; margin: 10px 0; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); }
+        .prediction { font-size: 1.3em; font-weight: bold; margin: 10px 0; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.2); }
+        
+        /* The Math Details Box */
         #math-details { display: none; background: #ffffff; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 0.85em; text-align: left; line-height: 1.5; color: #444; border: 1px solid #ddd; }
+        
         .red { background: #ffebee; color: #c62828; border: 1px solid #ef5350; }
         .yellow { background: #fff9c4; color: #f57f17; border: 1px solid #fbc02d; }
         .green { background: #e8f5e9; color: #2e7d32; border: 1px solid #66bb6a; }
@@ -29,7 +38,7 @@
 
 <div class="card" id="capture-area">
     <h2>Endo-Referee AI</h2>
-    <div class="subtitle">Clinical Decision Support v6.5</div>
+    <div class="subtitle">Clinical Decision Support v6.6</div>
     
     <div class="input-group"><label>Patient ID</label><input type="text" id="p_id" placeholder="Anonymous"></div>
     <div class="input-group"><label>Current AFC (Total)</label><input type="number" id="afc" value="8"></div>
@@ -44,7 +53,7 @@
         <div id="metrics" style="font-size: 0.9em; margin-bottom: 10px;"></div>
         <div class="timestamp" id="ts"></div>
         
-        <button class="btn-math" id="toggle-btn" onclick="toggleMath()">Show Math Analysis</button>
+        <button class="btn-math" id="math-btn" onclick="toggleMath()">SHOW MATH ANALYSIS</button>
         
         <div id="math-details">
             <strong>1. Safety Margin (Vf):</strong> <span id="math_vf"></span><br>
@@ -75,15 +84,13 @@ function run() {
 
     if (Vf < 0.3 || survival < 3) {
         res.className = 'red';
-        document.getElementById('status').innerHTML = "<b>REFEREE CALL: RED</b><br>Significant Architectural Risk.";
     } else if (Vf < 0.6) {
         res.className = 'yellow';
-        document.getElementById('status').innerHTML = "<b>REFEREE CALL: YELLOW</b><br>Moderate Risk Multiplier.";
     } else {
         res.className = 'green';
-        document.getElementById('status').innerHTML = "<b>REFEREE CALL: GREEN</b><br>Favorable Surgical Margin.";
     }
 
+    document.getElementById('status').innerHTML = "<b>REFEREE CALL: " + (Vf < 0.3 ? "RED" : Vf < 0.6 ? "YELLOW" : "GREEN") + "</b><br>Surgical Safety Margin Risk Analysis.";
     document.getElementById('pred').innerHTML = "Predicted Post-Op AFC: " + survival;
     document.getElementById('metrics').innerHTML = "Safety Margin (Vf): " + (Vf*100).toFixed(0) + "%";
     document.getElementById('ts').innerText = "Patient: " + pId + " | " + new Date().toLocaleString();
@@ -93,39 +100,39 @@ function run() {
     document.getElementById('math_rm').innerText = Rm.toFixed(1);
     document.getElementById('math_yield').innerText = (afc * Vf).toFixed(1);
 
-    // Hide math details every time we run a fresh calculation
+    // Hide math details on new calculation
     document.getElementById('math_details').style.display = "none";
-    document.getElementById('toggle-btn').innerText = "Show Math Analysis";
+    document.getElementById('math-btn').innerText = "SHOW MATH ANALYSIS";
 }
 
 function toggleMath() {
     const details = document.getElementById('math_details');
-    const btn = document.getElementById('toggle-btn');
+    const btn = document.getElementById('math-btn');
     
     if (details.style.display === "block") {
         details.style.display = "none";
-        btn.innerText = "Show Math Analysis";
+        btn.innerText = "SHOW MATH ANALYSIS";
     } else {
         details.style.display = "block";
-        btn.innerText = "Hide Math Analysis";
+        btn.innerText = "HIDE MATH ANALYSIS";
     }
 }
 
 function takeScreenshot() {
     const area = document.getElementById('capture-area');
-    const toggleBtn = document.getElementById('toggle-btn');
-    const saveBtn = document.getElementById('save-btn');
+    const mBtn = document.getElementById('math-btn');
+    const sBtn = document.getElementById('save-btn');
     
-    toggleBtn.style.display = 'none'; // Hide button for screenshot
-    saveBtn.innerText = "Generating...";
+    mBtn.style.display = 'none';
+    sBtn.innerText = "Generating...";
     
     html2canvas(area, { scale: 2 }).then(canvas => {
         const link = document.createElement('a');
         link.download = 'Endo-Referee-Result.png';
         link.href = canvas.toDataURL("image/png");
         link.click();
-        toggleBtn.style.display = 'block'; // Show button again
-        saveBtn.innerText = "Save Result as Image";
+        mBtn.style.display = 'block';
+        sBtn.innerText = "Save Result as Image";
     });
 }
 </script>
