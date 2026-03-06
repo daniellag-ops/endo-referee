@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Endo-Referee AI v6.2</title>
+    <title>Endo-Referee AI v6.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
@@ -17,7 +17,7 @@
         .btn-secondary { width: 100%; padding: 10px; background: #95a5a6; color: white; border: none; border-radius: 6px; font-size: 0.9em; font-weight: bold; cursor: pointer; margin-top: 10px; display: none; }
         #result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; text-align: center; }
         .prediction { font-size: 1.3em; font-weight: bold; margin: 10px 0; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); }
-        .math-toggle { font-size: 0.85em; color: #3498db; cursor: pointer; text-decoration: underline; margin-top: 15px; display: inline-block; }
+        .math-toggle { font-size: 0.85em; color: #3498db; cursor: pointer; text-decoration: underline; margin-top: 15px; display: inline-block; border:none; background:none; }
         #math-details { display: none; background: #ffffff; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 0.85em; text-align: left; line-height: 1.5; color: #444; border: 1px solid #ddd; }
         .red { background: #ffebee; color: #c62828; border: 1px solid #ef5350; }
         .yellow { background: #fff9c4; color: #f57f17; border: 1px solid #fbc02d; }
@@ -29,7 +29,7 @@
 
 <div class="card" id="capture-area">
     <h2>Endo-Referee AI</h2>
-    <div class="subtitle">Clinical Decision Support v6.2</div>
+    <div class="subtitle">Clinical Decision Support v6.4</div>
     
     <div class="input-group"><label>Patient ID</label><input type="text" id="p_id" placeholder="Anonymous"></div>
     <div class="input-group"><label>Current AFC (Total)</label><input type="number" id="afc" value="8"></div>
@@ -44,9 +44,9 @@
         <div id="metrics" style="font-size: 0.9em; margin-bottom: 10px;"></div>
         <div class="timestamp" id="ts"></div>
         
-        <div class="math-toggle" id="toggle-link" onclick="toggleMath()">See the Math Analysis</div>
+        <button class="math-toggle" id="toggle-link" onclick="toggleMath()">See the Math Analysis</button>
         
-        <div id="math-details">
+        <div id="math-details" style="display: none;">
             <strong>1. Safety Margin (Vf):</strong> <span id="math_vf"></span><br>
             <strong>2. Follicular Density (Df):</strong> <span id="math_df"></span>/cc<br>
             <strong>3. Risk Multiplier (Rm):</strong> <span id="math_rm"></span>x<br>
@@ -58,27 +58,21 @@
 <button class="btn-secondary" id="save-btn" onclick="takeScreenshot()">Save Result as Image</button>
 
 <script>
-// This "Switch" variable keeps track of whether the box is open or closed
-var isMathOpen = false;
-
 function run() {
     const pId = document.getElementById('p_id').value || "Anonymous";
     const afc = parseFloat(document.getElementById('afc').value);
     const vt = parseFloat(document.getElementById('v_t').value);
     const vc = parseFloat(document.getElementById('v_c').value);
     
-    // Core Calculations
     const Vf = (vt - vc) / vt;
     const Rm = 1 / Vf;
     const Df = afc / (vt - vc);
     const survival = Math.round(afc * Vf);
     
-    // Show the Results Box
     const res = document.getElementById('result');
     res.style.display = 'block';
     document.getElementById('save-btn').style.display = 'block';
 
-    // Set the Referee Color
     if (Vf < 0.3 || survival < 3) {
         res.className = 'red';
         document.getElementById('status').innerHTML = "<b>REFEREE CALL: RED</b><br>Significant Architectural Risk.";
@@ -90,28 +84,23 @@ function run() {
         document.getElementById('status').innerHTML = "<b>REFEREE CALL: GREEN</b><br>Favorable Surgical Margin.";
     }
 
-    // Update Text Fields
     document.getElementById('pred').innerHTML = "Predicted Post-Op AFC: " + survival;
     document.getElementById('metrics').innerHTML = "Safety Margin (Vf): " + (Vf*100).toFixed(0) + "%";
     document.getElementById('ts').innerText = "Patient: " + pId + " | " + new Date().toLocaleString();
     
-    // Update Math Analysis Fields
     document.getElementById('math_vf').innerText = (Vf * 100).toFixed(0) + "%";
     document.getElementById('math_df').innerText = Df.toFixed(2);
     document.getElementById('math_rm').innerText = Rm.toFixed(1);
     document.getElementById('math_yield').innerText = (afc * Vf).toFixed(1);
-    
-    // IMPORTANT: Reset the math box to "closed" every time a new calculation happens
+
+    // Force hide the math box when a new calculation runs
     document.getElementById('math_details').style.display = "none";
-    isMathOpen = false;
 }
 
-// THIS IS THE TOGGLE THAT WAS GIVING US TROUBLE - NOW FIXED
 function toggleMath() {
     const details = document.getElementById('math_details');
-    isMathOpen = !isMathOpen; // This flips the switch: true becomes false, false becomes true
-    
-    if (isMathOpen) {
+    // Direct check of the style property
+    if (details.style.display === "none") {
         details.style.display = "block";
     } else {
         details.style.display = "none";
