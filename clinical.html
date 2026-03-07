@@ -67,7 +67,22 @@
         <b>Validation Framework:</b> Logic calibrated against a 1,000-patient Monte Carlo simulation. Baseline risks anchored to documented <b>38% Surgical Tax</b> and <b>26.4% Biological Decay</b>.
     </div>
 </div>
+<button class="btn-predict" onclick="calculate()">Analyze Velocity & Risk</button>
 
+    <div id="result">
+        <div class="velocity-box" id="v_output"></div>
+        <div id="status" style="font-weight:bold; font-size:1.2em;"></div>
+        <div id="msg" style="margin-top:10px; font-size:0.9em;"></div>
+    </div>
+
+    <div class="footer-info" style="margin-top: 25px; font-size: 0.75em; color: #95a5a6; border-top: 1px solid #eee; padding-top: 15px; line-height: 1.4; text-align: left;">
+        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 10px;">
+        <b>Validation Framework:</b> Logic stress-tested against a <b>1,000-patient Monte Carlo simulation</b>. 
+        Baseline risks are anchored to the documented <b>38% Surgical Tax</b> and <b>26.4% Biological Decay</b>.
+    </div>
+    </div> <script>
+// ... leave the script as it is ...
+    
 <script>
 function runSimulationAI() {
     const n = parseFloat(document.getElementById('now').value);
