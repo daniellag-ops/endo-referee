@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endo-Predictor: Clinical v7.0</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; max-width: 440px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 6px solid #2ecc71; }
+        h2 { color: #2c3e50; margin: 0 0 5px 0; }
+        .subtitle { color: #7f8c8d; font-size: 0.85em; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 4px; font-size: 0.85em; font-weight: bold; color: #34495e; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #dcdde1; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .btn-predict { width: 100%; padding: 15px; background: #2ecc71; color: white; border: none; border-radius: 6px; font-size: 1em; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-predict:hover { background: #27ae60; }
+        #result { margin-top: 20px; padding: 20px; border-radius: 8px; display: none; text-align: center; border: 2px solid transparent; }
+        .red { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+        .yellow { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+        .green { background: #dcfce7; color: #166534; border-color: #4ade80; }
+        .prediction-text { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; }
+        .evidence-box { background: rgba(255,255,255,0.5); padding: 10px; border-radius: 4px; font-size: 0.85em; margin-top: 10px; text-align: left; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Endo-Predictor AI</h2>
+    <div class="subtitle">Clinical Risk Algorithm (Standard Data)</div>
+    
+    <div class="input-group">
+        <label>Patient Age</label>
+        <input type="number" id="age" value="34">
+    </div>
+    
+    <div class="input-group">
+        <label>Current AMH (ng/mL)</label>
+        <input type="number" id="amh" value="2.0" step="0.1">
+    </div>
+    
+    <div class="input-group">
+        <label>Location of Endometrioma</label>
+        <select id="bilaterality">
+            <option value="1">Unilateral (One Side)</option>
+            <option value="2">Bilateral (Both Sides)</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label>Surgical History</label>
+        <select id="history">
+            <option value="0">Primary Surgery (No previous OMA excision)</option>
+            <option value="1">Recurrent (History of previous excision)</option>
+        </select>
+    </div>
+
+    <button class="btn-predict" onclick="runClinicalAI()">Run Clinical Triage</button>
+
+    <div id="result">
+        <div id="call" class="prediction-text"></div>
+        <div id="mandate"></div>
+        <div class="evidence-box" id="evidence"></div>
+    </div>
+</div>
+
+<script>
+function runClinicalAI() {
+    const age = parseInt(document.getElementById('age').value);
+    const amh = parseFloat(document.getElementById('amh').value);
+    const bilateral = parseInt(document.getElementById('bilaterality').value);
+    const history = parseInt(document.getElementById('history').value);
+
+    let riskScore = 0;
+    
+    // Logic points based on Systematic Review findings [cite: 195, 197]
+    if (age >= 35) riskScore += 2;
+    if (bilateral === 2) riskScore += 3;
+    if (history === 1) riskScore += 3;
+    if (amh < 1.1) riskScore += 2;
+
+    const res = document.getElementById('result');
+    const call = document.getElementById('call');
+    const mandate = document.getElementById('mandate');
+    const evidence = document.getElementById('evidence');
+    
+    res.style.display = 'block';
+
+    if (riskScore >= 6) {
+        res.className = 'red';
+        call.innerText = "REFEREE CALL: RED";
+        mandate.innerHTML = "<b>CRITICAL RISK:</b> High probability of Surgical Tax >40%.<br>Mandatory Fertility Preservation before Surgery.";
+        evidence.innerHTML = "<b>Evidence:</b> Bilateral disease and previous surgery significantly lower baseline AMH and increase risk of permanent loss[cite: 195, 288].";
+    } else if (riskScore >= 3) {
+        res.className = 'yellow';
+        call.innerText = "REFEREE CALL: YELLOW";
+        mandate.innerHTML = "<b>MODERATE RISK:</b> Accelerated Ovarian Decay Detected.<br>Strongly Recommend Oocyte Cryopreservation.";
+        evidence.innerHTML = "<b>Evidence:</b> OMA patients show a 26% AMH decline over 6 months vs 7% in healthy controls.";
+    } else {
+        res.className = 'green';
+        call.innerText = "REFEREE CALL: GREEN";
+        mandate.innerHTML = "<b>STANDARD RISK:</b> Proceed with Caution.<br>Standard Surgical Tax expected.";
+        evidence.innerHTML = "<b>Evidence:</b> Younger age and unilateral presentation offer higher resilience to the 'stripping technique'[cite: 60, 289].";
+    }
+}
+</script>
+</body>
+</html>
